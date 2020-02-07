@@ -69,7 +69,8 @@ public:
     bool getDebug() const { return _debug; }
     bool getConvertPrimitives() const {return _convert;}
     const TimeSettings &getTimeSettings() const { return _time; }
-    
+    const std::string &getFilename() const {return _filename;}
+
     static unsigned int RenderThread(void *data);
     static unsigned int ProcessConnectionsThread(void *data);
 
@@ -105,6 +106,7 @@ private:
                            // finished reading
     std::vector<AtNode *> _nodes;
     AtNode *_defaultShader;
+    std::string _filename; // usd filename that is currently being read
     AtCritSec _readerLock; // arnold mutex for multi-threaded translator
 };
 
