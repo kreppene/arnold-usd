@@ -19,8 +19,9 @@
 #include <vector>
 #include "reader.h"
 #include "registry.h"
+#include "../utils/utils.h"
 
-#if defined(_DARWIN)
+#if defined(_DARWIN) || defined(_LINUX)
 #include <dlfcn.h>
 #endif
 
@@ -37,6 +38,45 @@ node_parameters
     AiParameterBool("debug", false);
     AiParameterInt("threads", 1);
     AiParameterArray("overrides", AiArray(0, 1, AI_TYPE_STRING));
+
+    // Set metadata that triggers the re-generation of the procedural contents when this attribute
+    // is modified (see #176)
+    AiMetaDataSetBool(nentry, AtString("filename"), AtString("_triggers_reload"), true);
+    AiMetaDataSetBool(nentry, AtString("object_path"), AtString("_triggers_reload"), true);
+    AiMetaDataSetBool(nentry, AtString("frame"), AtString("_triggers_reload"), true);
+    AiMetaDataSetBool(nentry, AtString("overrides"), AtString("_triggers_reload"), true);
+
+    // This type of procedural can be initialized in parallel
+    AiMetaDataSetBool(nentry, AtString(""), AtString("parallel_init"), true);
+
+}
+typedef std::vector<std::string> PathList;
+
+void applyProceduralSearchPath(std::string &filename, const AtUniverse *universe)
+{
+    AtNode* optionsNode = AiUniverseGetOptions(universe);
+    if (optionsNode) {
+        // We want to allow using the procedural search path to point to directories containing .abc files in the same
+        // way procedural search paths are used to resolve procedural .ass files. 
+        // To do this we extract the procedural path from the options node, where environment variables specified using
+        // the Arnold standard (e.g. [HOME]) are expanded. If our .abc file exists in any of the directories we
+        // concatenate the path and the relative filename to create a new procedural argument filename using the full path.
+        std::string proceduralPath = std::string(AiNodeGetStr(optionsNode, "procedural_searchpath"));
+        std::string expanded_searchpath = expandEnvironmentVariables(proceduralPath.c_str());
+
+        PathList pathList;
+        tokenizePath(expanded_searchpath, pathList, ":;", true);
+        if (!pathList.empty()) {
+            for (PathList::const_iterator it = pathList.begin(); it != pathList.end(); ++it) {
+                std::string path = *it;
+                std::string fullPath = pathJoin(path.c_str(), filename.c_str());
+                if (isFileAccessible(fullPath)) {
+                    filename = fullPath;
+                    return;
+                }
+            }
+        }
+    }
 }
 
 procedural_init
@@ -48,6 +88,8 @@ procedural_init
     if (filename.empty()) {
         return false;
     }
+    applyProceduralSearchPath(filename, nullptr);
+
     std::string objectPath(AiNodeGetStr(node, "object_path"));
     data->setProceduralParent(node);
     data->setFrame(AiNodeGetFlt(node, "frame"));
@@ -113,6 +155,9 @@ procedural_viewport
     if (filename.empty()) {
         return false;
     }
+
+    applyProceduralSearchPath(filename, universe);
+
     // For now we always create a new reader for the viewport display, 
     // can we reuse the eventual existing one ?
     UsdArnoldReader *reader = new UsdArnoldReader();
@@ -146,7 +191,7 @@ procedural_viewport
 }
 #endif
 
-#if defined(_DARWIN)
+#if defined(_DARWIN) || defined(_LINUX)
 std::string USDLibraryPath()
 {
    Dl_info info;
@@ -177,7 +222,7 @@ node_loader
     * see : https://github.com/openssl/openssl/issues/653#issuecomment-206343347
     *       https://github.com/jemalloc/jemalloc/issues/1122
     */
-#if defined(_DARWIN)
+#if defined(_DARWIN) || defined(_LINUX)
     const auto result = dlopen(USDLibraryPath().c_str(), RTLD_LAZY | RTLD_GLOBAL | RTLD_NODELETE);
     if (!result)
        AiMsgWarning("[USD] failed to re-load usd_proc.dylib. Crashes might happen on pre-10.13 OSX systems: %s\n", dlerror());
@@ -190,7 +235,8 @@ node_loader
  *  The following code is meant to add support for USD format,
  *  and kick directly USD files
  **/
-#if AI_VERSION_ARCH_NUM >= 6 && AI_VERSION_MINOR_NUM >= 2
+#ifdef ARNOLD_HAS_SCENE_FORMAT_API
+#include <ai_scene_format.h>
 
 AI_SCENE_FORMAT_EXPORT_METHODS(UsdSceneFormatMtd);
 #include "writer.h"
@@ -238,6 +284,11 @@ scene_format_loader
    format->name        = "USD";
    format->description = "Load and write USD files in Arnold";
    strcpy(format->version, AI_VERSION);
+#if defined(_DARWIN) || defined(_LINUX)
+    const auto result = dlopen(USDLibraryPath().c_str(), RTLD_LAZY | RTLD_GLOBAL | RTLD_NODELETE);
+    if (!result)
+       AiMsgWarning("[USD] failed to re-load usd_proc.dylib. Crashes might happen on pre-10.13 OSX systems: %s\n", dlerror());
+#endif
    return true;
 }
 

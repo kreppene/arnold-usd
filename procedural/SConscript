@@ -31,6 +31,9 @@ src_writer_dir  = os.path.join(myenv['ROOT_DIR'], 'translator', 'writer')
 if not system.IS_WINDOWS:
     myenv.Append(CXXFLAGS = Split('-fPIC -Wno-deprecated-register'))
 
+if env['ARNOLD_HAS_SCENE_FORMAT_API']:
+    myenv.Append(CPPDEFINES=['ARNOLD_HAS_SCENE_FORMAT_API'])
+
 # Include paths
 includePaths = [
     '.',
@@ -42,6 +45,9 @@ myenv.Append(CPPPATH = includePaths)
 myenv.Append(LIBS = ['ai'])
 
 usd_deps = []
+
+if system.IS_LINUX:
+    myenv.Append(LIBS = ['dl'])
 
 if myenv['USD_BUILD_MODE'] == 'monolithic':
     usd_deps = [
@@ -69,7 +75,7 @@ elif myenv['USD_BUILD_MODE'] == 'static':
 
         if system.IS_LINUX:
             myenv.Append(LINKFLAGS=['-Wl,--whole-archive,%s,--no-whole-archive' % whole_archives])
-            myenv.Append(LIBS = ['dl', 'pthread'])
+            myenv.Append(LIBS = ['pthread'])
         else:
             myenv.Append(LINKFLAGS=['-Wl,-all_load,%s,-noall_load' % whole_archives])
 else:  # shared libs
