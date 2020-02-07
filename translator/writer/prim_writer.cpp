@@ -560,7 +560,9 @@ static inline bool convertArnoldAttribute(const AtNode *node, UsdPrim &prim, Usd
             AtNode* target = AiNodeGetLink(node, paramName);
             if (target) {
                 writer.writePrimitive(target);
-                attrWriter.AddConnection(SdfPath(UsdArnoldPrimWriter::getArnoldNodeName(target)));
+				
+				std::string attrPath = writer.materialParent + UsdArnoldPrimWriter::getArnoldNodeName(target);
+                attrWriter.AddConnection(SdfPath(attrPath));				
             }
         }
     }
@@ -688,8 +690,11 @@ void UsdArnoldPrimWriter::writeMaterialBinding(const AtNode *node, UsdPrim &prim
     // the eventual displacement. This way we'll have a unique material in USD
     // per combination of surface shader + displacement instead of duplicating it
     // for every geometry.
-    std::string materialName = "/materials";
+
+    std::string materialName = writer.materialParent + "/materials";
     materialName += shaderName;
+	shaderName = writer.materialParent + shaderName ;
+	dispName = writer.materialParent + dispName;
     materialName += dispName;
     
     // Note that if the material was already created, Define will just return

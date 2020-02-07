@@ -52,6 +52,9 @@ public:
     bool isNodeExported(const AtString &name) { return _exportedNodes.count(name) == 1;}
 
 
+	std::string materialParent;
+
+
 private:
     const AtUniverse *_universe;        // Arnold universe to be converted
     UsdArnoldWriterRegistry *_registry; // custom registry used for this writer. If null, a global

@@ -42,6 +42,8 @@ void UsdArnoldWriteShader::write(const AtNode *node, UsdArnoldWriter &writer)
     std::string nodeName = getArnoldNodeName(node); // what is the USD name for this primitive
     UsdStageRefPtr stage = writer.getUsdStage();    // Get the USD stage defined in the writer
 
+	nodeName = writer.materialParent + nodeName; 
+
     // Create the primitive of type Shader (UsdShadeShader)
     UsdShadeShader shaderAPI = UsdShadeShader::Define(stage, SdfPath(nodeName));
     shaderAPI.CreateIdAttr().Set(TfToken(_usdShaderId)); // set the info:id parameter to the actual shader name

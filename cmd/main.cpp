@@ -41,6 +41,7 @@ int main(int argc, char** argv)
 
     std::string assname = argv[1]; // 1st command-line argument is the input .ass file
     std::string usdname = argv[2]; // 2nd command-line argument is the output .usd file
+	std::string matParent = argv[3];
 
     // Start the Arnold session, and load the input .ass file
     AiBegin(AI_SESSION_INTERACTIVE);
@@ -49,8 +50,10 @@ int main(int argc, char** argv)
     // Create a new USD stage to write out the .usd file
     UsdStageRefPtr stage = UsdStage::Open(SdfLayer::CreateNew(usdname));
 
+	printf (" %s \n", matParent.c_str());
     // Create a "writer" Translator that will handle the conversion
     UsdArnoldWriter* writer = new UsdArnoldWriter();
+	writer->materialParent = matParent;
     writer->setUsdStage(stage);    // give it the output stage
     writer->write(nullptr);        // do the conversion (nullptr being the default universe)
     stage->GetRootLayer()->Save(); // Ask USD to save out the file
