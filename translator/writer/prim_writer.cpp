@@ -645,20 +645,25 @@ bool UsdArnoldPrimWriter::writeAttribute(const AtNode *node, const char *paramNa
 
 void UsdArnoldPrimWriter::writeMatrix(UsdGeomXformable &xformable, const AtNode *node, UsdArnoldWriter &writer)
 {
-    AtMatrix matrix = AiNodeGetMatrix(node, "matrix");
-    _exportedAttrs.insert("matrix");
+	
 
-    if (AiM4IsIdentity(matrix))
-        return; // no need to set this matrix
+	AtMatrix matrix = AiNodeGetMatrix(node, "matrix");
+	_exportedAttrs.insert("matrix");
 
-    UsdGeomXformOp xformOp = xformable.MakeMatrixXform();
+	if (writer.ignorMatrix == false)
+	{
+		if (AiM4IsIdentity(matrix))
+			return; // no need to set this matrix
 
-    double m[4][4];
-    for (unsigned int i = 0; i < 4; ++i)
-        for (unsigned int j = 0; j < 4; ++j)
-            m[i][j] = matrix[i][j];
+		UsdGeomXformOp xformOp = xformable.MakeMatrixXform();
 
-    xformOp.Set(GfMatrix4d(m));
+		double m[4][4];
+		for (unsigned int i = 0; i < 4; ++i)
+			for (unsigned int j = 0; j < 4; ++j)
+				m[i][j] = matrix[i][j];
+
+		xformOp.Set(GfMatrix4d(m));
+	 }
 }
 
 void UsdArnoldPrimWriter::writeMaterialBinding(const AtNode *node, UsdPrim &prim, UsdArnoldWriter &writer)

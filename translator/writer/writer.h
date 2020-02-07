@@ -53,6 +53,7 @@ public:
 
 
 	std::string materialParent;
+	bool ignorMatrix = false;
 
 
 private:

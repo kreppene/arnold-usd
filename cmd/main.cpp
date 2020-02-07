@@ -42,6 +42,16 @@ int main(int argc, char** argv)
     std::string assname = argv[1]; // 1st command-line argument is the input .ass file
     std::string usdname = argv[2]; // 2nd command-line argument is the output .usd file
 	std::string matParent = argv[3];
+	bool ignorMatrix = false;
+	std::vector<std::string> args(argv, argv+argc);
+	for (size_t i = 1; i < args.size(); ++i) 
+	{
+		if (args[i] == "-ix") 
+		{
+			ignorMatrix = true;
+		}
+	}	
+	
 
     // Start the Arnold session, and load the input .ass file
     AiBegin(AI_SESSION_INTERACTIVE);
@@ -53,6 +63,7 @@ int main(int argc, char** argv)
 	printf (" %s \n", matParent.c_str());
     // Create a "writer" Translator that will handle the conversion
     UsdArnoldWriter* writer = new UsdArnoldWriter();
+	writer->ignorMatrix = ignorMatrix;
 	writer->materialParent = matParent;
     writer->setUsdStage(stage);    // give it the output stage
     writer->write(nullptr);        // do the conversion (nullptr being the default universe)
