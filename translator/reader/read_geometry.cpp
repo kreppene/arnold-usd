@@ -46,11 +46,15 @@ PXR_NAMESPACE_USING_DIRECTIVE
  **/
 void UsdArnoldReadMesh::read(const UsdPrim &prim, UsdArnoldReaderContext &context)
 {
+    const TimeSettings &time = context.getTimeSettings();
+    float frame = time.frame;
+
+    if (getPrimVisibility(prim, frame))
+        return;
+
     AtNode *node = context.createArnoldNode("polymesh", prim.GetPath().GetText());
     
     AiNodeSetBool(node, "smoothing", true);
-    const TimeSettings &time = context.getTimeSettings();
-    float frame = time.frame;
 
     // Get mesh.
     UsdGeomMesh mesh(prim);
@@ -119,10 +123,13 @@ void UsdArnoldReadMesh::read(const UsdPrim &prim, UsdArnoldReaderContext &contex
 
 void UsdArnoldReadCurves::read(const UsdPrim &prim, UsdArnoldReaderContext &context)
 {
-    AtNode *node = context.createArnoldNode("curves", prim.GetPath().GetText());
-    
     const TimeSettings &time = context.getTimeSettings();
     float frame = time.frame;
+
+    if (getPrimVisibility(prim, frame))
+        return;
+	
+    AtNode *node = context.createArnoldNode("curves", prim.GetPath().GetText());
 
     int basis = 3;
     if (prim.IsA<UsdGeomBasisCurves>()) {
@@ -161,11 +168,15 @@ void UsdArnoldReadCurves::read(const UsdPrim &prim, UsdArnoldReaderContext &cont
 
 void UsdArnoldReadPoints::read(const UsdPrim &prim, UsdArnoldReaderContext &context)
 {
+    const TimeSettings &time = context.getTimeSettings();
+    float frame = time.frame;
+
+    if (getPrimVisibility(prim, frame))
+        return;
+
     AtNode *node = context.createArnoldNode("points", prim.GetPath().GetText());
     
     UsdGeomPoints points(prim);
-    const TimeSettings &time = context.getTimeSettings();
-    float frame = time.frame;
 
     // Points positions
     exportArray<GfVec3f, GfVec3f>(points.GetPointsAttr(), node, "points", time);
@@ -187,11 +198,15 @@ void UsdArnoldReadPoints::read(const UsdPrim &prim, UsdArnoldReaderContext &cont
  **/
 void UsdArnoldReadCube::read(const UsdPrim &prim, UsdArnoldReaderContext &context)
 {
+    const TimeSettings &time = context.getTimeSettings();
+    float frame = time.frame;
+
+    if (getPrimVisibility(prim, frame))
+        return;
+
     AtNode *node = context.createArnoldNode("box", prim.GetPath().GetText());
     
     UsdGeomCube cube(prim);
-    const TimeSettings &time = context.getTimeSettings();
-    float frame = time.frame;
 
     VtValue size_attr;
     if (cube.GetSizeAttr().Get(&size_attr)) {
@@ -208,11 +223,15 @@ void UsdArnoldReadCube::read(const UsdPrim &prim, UsdArnoldReaderContext &contex
 
 void UsdArnoldReadSphere::read(const UsdPrim &prim, UsdArnoldReaderContext &context)
 {
+    const TimeSettings &time = context.getTimeSettings();
+    float frame = time.frame;
+
+    if (getPrimVisibility(prim, frame))
+        return;
+
     AtNode *node = context.createArnoldNode("sphere", prim.GetPath().GetText());
     
     UsdGeomSphere sphere(prim);
-    const TimeSettings &time = context.getTimeSettings();
-    float frame = time.frame;
 
     VtValue radius_attr;
     if (sphere.GetRadiusAttr().Get(&radius_attr))
@@ -263,11 +282,15 @@ void exportCylindricalShape(const UsdPrim &prim, AtNode *node, const char *radiu
 
 void UsdArnoldReadCylinder::read(const UsdPrim &prim, UsdArnoldReaderContext &context)
 {
+    const TimeSettings &time = context.getTimeSettings();
+    float frame = time.frame;
+
+    if (getPrimVisibility(prim, frame))
+        return;
+
     AtNode *node = context.createArnoldNode("cylinder", prim.GetPath().GetText());
     
     exportCylindricalShape<UsdGeomCylinder>(prim, node, "radius");
-    const TimeSettings &time = context.getTimeSettings();
-    float frame = time.frame;
 
     exportMatrix(prim, node, time, context);
     exportPrimvars(prim, node, time);
@@ -277,11 +300,16 @@ void UsdArnoldReadCylinder::read(const UsdPrim &prim, UsdArnoldReaderContext &co
 
 void UsdArnoldReadCone::read(const UsdPrim &prim, UsdArnoldReaderContext &context)
 {
+    const TimeSettings &time = context.getTimeSettings();
+    float frame = time.frame;
+
+    if (getPrimVisibility(prim, frame))
+        return;
+	
     AtNode *node = context.createArnoldNode("cone", prim.GetPath().GetText());
     
     exportCylindricalShape<UsdGeomCone>(prim, node, "bottom_radius");
 
-    const TimeSettings &time = context.getTimeSettings();
     exportMatrix(prim, node, time, context);
     exportPrimvars(prim, node, time);
     exportMaterialBinding(prim, node, context);
@@ -292,10 +320,15 @@ void UsdArnoldReadCone::read(const UsdPrim &prim, UsdArnoldReaderContext &contex
 // special case, and combine cylinders with spheres, or is it enough for now ?
 void UsdArnoldReadCapsule::read(const UsdPrim &prim, UsdArnoldReaderContext &context)
 {
+    const TimeSettings &time = context.getTimeSettings();
+    float frame = time.frame;
+
+    if (getPrimVisibility(prim, frame))
+        return;
+	
     AtNode *node = context.createArnoldNode("cylinder", prim.GetPath().GetText());
     
     exportCylindricalShape<UsdGeomCapsule>(prim, node, "radius");
-    const TimeSettings &time = context.getTimeSettings();
     exportMatrix(prim, node, time, context);
     exportPrimvars(prim, node, time);
     exportMaterialBinding(prim, node, context);
@@ -304,14 +337,18 @@ void UsdArnoldReadCapsule::read(const UsdPrim &prim, UsdArnoldReaderContext &con
 
 void UsdArnoldReadBounds::read(const UsdPrim &prim, UsdArnoldReaderContext &context)
 {
+    const TimeSettings &time = context.getTimeSettings();
+    float frame = time.frame;
+
+    if (getPrimVisibility(prim, frame))
+        return;
+
     AtNode *node = context.createArnoldNode("box", prim.GetPath().GetText());
     
     if (!prim.IsA<UsdGeomBoundable>())
         return;
 
     UsdGeomBoundable boundable(prim);
-    const TimeSettings &time = context.getTimeSettings();
-    float frame = time.frame;
     VtVec3fArray extent;
 
     UsdGeomBoundable::ComputeExtentFromPlugins(boundable,
@@ -325,14 +362,18 @@ void UsdArnoldReadBounds::read(const UsdPrim &prim, UsdArnoldReaderContext &cont
 
 void UsdArnoldReadGenericPolygons::read(const UsdPrim &prim, UsdArnoldReaderContext &context)
 {
+    const TimeSettings &time = context.getTimeSettings();
+    float frame = time.frame;
+
+    if (getPrimVisibility(prim, frame))
+        return;
+
     AtNode *node = context.createArnoldNode("polymesh", prim.GetPath().GetText());
     
     if (!prim.IsA<UsdGeomMesh>())
         return;
 
     UsdGeomMesh mesh(prim);
-    const TimeSettings &time = context.getTimeSettings();
-    float frame = time.frame;
 
     MeshOrientation mesh_orientation;
     // Get orientation. If Left-handed, we will need to invert the vertex
@@ -372,12 +413,17 @@ void UsdArnoldReadGenericPolygons::read(const UsdPrim &prim, UsdArnoldReaderCont
 
 void UsdArnoldReadGenericPoints::read(const UsdPrim &prim, UsdArnoldReaderContext &context)
 {
+    const TimeSettings &time = context.getTimeSettings();
+    float frame = time.frame;
+
+    if (getPrimVisibility(prim, frame))
+        return;
+	
     AtNode *node = context.createArnoldNode("points", prim.GetPath().GetText());
     
     if (!prim.IsA<UsdGeomPointBased>())
         return;
     
-    const TimeSettings &time = context.getTimeSettings();
     UsdGeomPointBased points(prim);
     exportArray<GfVec3f, GfVec3f>(points.GetPointsAttr(), node, "points", time);
 }
@@ -397,10 +443,14 @@ void UsdArnoldReadGenericPoints::read(const UsdPrim &prim, UsdArnoldReaderContex
 
 void UsdArnoldPointInstancer::read(const UsdPrim &prim, UsdArnoldReaderContext &context)
 {
-    UsdGeomPointInstancer pointInstancer(prim);
     const TimeSettings &time = context.getTimeSettings();
-    const float frame = time.frame;
-    
+    float frame = time.frame;
+
+    if (getPrimVisibility(prim, frame))
+        return;
+
+    UsdGeomPointInstancer pointInstancer(prim);
+
     // this will be used later to contruct the name of the instances
     std::string primName = prim.GetPath().GetText();
 

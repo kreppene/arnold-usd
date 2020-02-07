@@ -487,3 +487,14 @@ void exportParameter(
     }
 }
 
+bool getPrimVisibility(const UsdPrim& prim, float frame)
+{
+	// We should also consider standard USD visibility flag.
+	UsdGeomImageable imageable = UsdGeomImageable(prim);
+	bool invisibleFromUSD = imageable &&
+		imageable.ComputeVisibility(frame) == UsdGeomTokens->invisible;
+
+	printf(" %s %i \n", prim.GetPath().GetText(),  int(invisibleFromUSD));
+
+	return invisibleFromUSD;
+}
