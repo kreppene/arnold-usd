@@ -43,12 +43,18 @@ int main(int argc, char** argv)
     std::string usdname = argv[2]; // 2nd command-line argument is the output .usd file
 	std::string matParent = argv[3];
 	bool ignorMatrix = false;
+	bool ignorOptions = false;
 	std::vector<std::string> args(argv, argv+argc);
+	
 	for (size_t i = 1; i < args.size(); ++i) 
 	{
 		if (args[i] == "-ix") 
 		{
 			ignorMatrix = true;
+		}
+		if (args[i] == "-io")
+		{
+			ignorOptions = true;
 		}
 	}	
 	
@@ -64,6 +70,7 @@ int main(int argc, char** argv)
     // Create a "writer" Translator that will handle the conversion
     UsdArnoldWriter* writer = new UsdArnoldWriter();
 	writer->ignorMatrix = ignorMatrix;
+	writer->ignorOptions = ignorOptions;
 	writer->materialParent = matParent;
     writer->setUsdStage(stage);    // give it the output stage
     writer->write(nullptr);        // do the conversion (nullptr being the default universe)

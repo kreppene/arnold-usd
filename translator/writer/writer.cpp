@@ -76,11 +76,17 @@ void UsdArnoldWriter::writePrimitive(const AtNode *node)
 
     static const AtString rootStr("root");
     static const AtString ai_default_reflection_shaderStr("ai_default_reflection_shader");
+	static const AtString optionsStr("options");
 
     // some Arnold nodes shouldn't be saved
     if (nodeName == rootStr || nodeName == ai_default_reflection_shaderStr) {
         return;
     }
+
+	// skip writing the options node
+	if (ignorOptions == true && nodeName == optionsStr) {
+		return;
+	}
 
     if (isNodeExported(nodeName))
         return; // this node has already been exported, nothing to do
