@@ -41,7 +41,7 @@ int main(int argc, char** argv)
 
     std::string assname = argv[1]; // 1st command-line argument is the input .ass file
     std::string usdname = argv[2]; // 2nd command-line argument is the output .usd file
-	std::string matParent = argv[3];
+	std::string matParent = "";
 	bool ignorMatrix = false;
 	bool ignorOptions = false;
 	std::vector<std::string> args(argv, argv+argc);
@@ -49,13 +49,13 @@ int main(int argc, char** argv)
 	for (size_t i = 1; i < args.size(); ++i) 
 	{
 		if (args[i] == "-ix") 
-		{
 			ignorMatrix = true;
-		}
-		if (args[i] == "-io")
-		{
+		
+		else if (args[i] == "-io")
 			ignorOptions = true;
-		}
+		
+		else if (args[i] == "-mp")
+			matParent = args[i+1];
 	}	
 	
 
