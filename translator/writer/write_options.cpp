@@ -42,6 +42,8 @@ PXR_NAMESPACE_USING_DIRECTIVE
 
 void UsdArnoldWriteOptions::write(const AtNode *node, UsdArnoldWriter &writer)
 {
+	return;
+	
     UsdStageRefPtr stage = writer.getUsdStage();
     UsdPrim prim = stage->DefinePrim(SdfPath("/options"), TfToken("ArnoldOptions"));
 
