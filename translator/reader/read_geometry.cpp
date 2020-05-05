@@ -80,6 +80,7 @@ void UsdArnoldReadMesh::read(const UsdPrim &prim, UsdArnoldReaderContext &contex
         VtIntArray array;
         mesh.GetFaceVertexIndicesAttr().Get(&array, frame);
         size_t size = array.size();
+
         if (size > 0) {
             meshOrientation.orientFaceIndexAttribute(array);
 
@@ -89,6 +90,7 @@ void UsdArnoldReadMesh::read(const UsdPrim &prim, UsdArnoldReaderContext &contex
         } else
             AiNodeResetParameter(node, "vidxs");
     }
+
 
     // Vertex positions
     exportArray<GfVec3f, GfVec3f>(mesh.GetPointsAttr(), node, "vlist", time);

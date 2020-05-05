@@ -515,7 +515,7 @@ std::string UsdArnoldPrimWriter::getArnoldNodeName(const AtNode* node)
         name = std::string("/") + name;
     }
 
-    return name;
+    return std::string("/Root/RootOffset") + name;
 }
 
 // Ensure a connected node is properly translated, handle the output attributes, 
@@ -981,6 +981,7 @@ void UsdArnoldPrimWriter::writeMatrix(UsdGeomXformable &xformable, const AtNode 
     double m[4][4];
     float timeDelta = (numKeys > 1) ? (motion_end - motion_start) / (int)(numKeys - 1) : 0.f;
     float time = motion_start;
+	/*
 
     for (unsigned int k = 0; k < numKeys; ++k) {
         AtMatrix &mtx = matrices[k];
@@ -992,6 +993,7 @@ void UsdArnoldPrimWriter::writeMatrix(UsdGeomXformable &xformable, const AtNode 
         xformOp.Set(GfMatrix4d(m), UsdTimeCode(time));
         time += timeDelta;
     }
+	*/
     AiArrayUnmap(array);
 }
 
@@ -1016,7 +1018,9 @@ static void processMaterialBinding(AtNode *shader, AtNode *displacement, UsdPrim
     // the eventual displacement. This way we'll have a unique material in USD
     // per combination of surface shader + displacement instead of duplicating it
     // for every geometry.
-    std::string materialName = "/materials";
+	
+	//RAY
+    std::string materialName = "/Root/RootOffset/materials";
     materialName += shaderName;
     materialName += dispName;
 
