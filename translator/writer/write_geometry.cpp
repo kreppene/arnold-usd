@@ -38,8 +38,8 @@ void UsdArnoldWriteMesh::write(const AtNode *node, UsdArnoldWriter &writer)
     UsdPrim prim = mesh.GetPrim();
 
     writeMatrix(mesh, node, writer);    
-    writeAttribute(node, "vlist", prim, mesh.GetPointsAttr(), writer);    
-
+    //writeAttribute(node, "vlist", prim, mesh.GetPointsAttr(), writer);    
+	_exportedAttrs.insert("vlist");
     mesh.GetOrientationAttr().Set(UsdGeomTokens->rightHanded);
     AtArray *vidxs = AiNodeGetArray(node, "vidxs");
     if (vidxs) {
@@ -51,6 +51,7 @@ void UsdArnoldWriteMesh::write(const AtNode *node, UsdArnoldWriter &writer)
         mesh.GetFaceVertexIndicesAttr().Set(vtArr);
     }
     _exportedAttrs.insert("vidxs");
+	/*
     AtArray *nsides = AiNodeGetArray(node, "nsides");
     if (nsides) {
         unsigned int nelems = AiArrayGetNumElements(nsides);
@@ -60,6 +61,7 @@ void UsdArnoldWriteMesh::write(const AtNode *node, UsdArnoldWriter &writer)
         }
         mesh.GetFaceVertexCountsAttr().Set(vtArr);
     }
+	*/
     _exportedAttrs.insert("nsides");
 
     // export UVs
@@ -95,6 +97,7 @@ void UsdArnoldWriteMesh::write(const AtNode *node, UsdArnoldWriter &writer)
             AiArrayUnmap(uvidxsArray);
         }
     }
+    /*
     AtArray *nlist = AiNodeGetArray(node, "nlist");
     static TfToken normalsToken("normals");
     unsigned int nlistNumElems = (nlist) ? AiArrayGetNumElements(nlist) : 0;
@@ -126,6 +129,7 @@ void UsdArnoldWriteMesh::write(const AtNode *node, UsdArnoldWriter &writer)
             AiArrayUnmap(nidxsArray);
         }
     }
+    */
     AtString subdivType = AiNodeGetStr(node, "subdiv_type");
     static AtString catclarkStr("catclark");
     static AtString linearStr("linear");
@@ -147,6 +151,8 @@ void UsdArnoldWriteMesh::write(const AtNode *node, UsdArnoldWriter &writer)
     // in the list of exportedAttrs
     if (AiNodeGetByte(node, "sidedness") > 0)
         mesh.GetDoubleSidedAttr().Set(true);
+
+
 
     _exportedAttrs.insert("uvlist");
     _exportedAttrs.insert("uvidxs");
