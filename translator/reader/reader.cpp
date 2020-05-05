@@ -126,6 +126,10 @@ unsigned int UsdArnoldReader::RenderThread(void *data)
     UsdArnoldReader *reader = threadData->context.getReader();
     TfToken visibility;
 
+    const TimeSettings &time = reader->getTimeSettings();
+    float frame = time.frame;
+
+	
     // Traverse the stage, either the full one, or starting from a root primitive
     // (in case an object_path is set).
     UsdPrimRange range = (rootPrim) ? UsdPrimRange(*rootPrim) : reader->getStage()->Traverse();
@@ -133,9 +137,10 @@ unsigned int UsdArnoldReader::RenderThread(void *data)
         const UsdPrim &prim(*iter);
         // Check if that primitive is set as being invisible. 
         // If so, skip it and prune its children to avoid useless conversions
+		
         if (prim.IsA<UsdGeomImageable>()) {
             UsdGeomImageable imageable(prim);
-            if (imageable.GetVisibilityAttr().Get(&visibility) && visibility == UsdGeomTokens->invisible) {
+            if (imageable.GetVisibilityAttr().Get(&visibility, frame) && visibility == UsdGeomTokens->invisible) {
                 iter.PruneChildren();
                 continue;
             }
