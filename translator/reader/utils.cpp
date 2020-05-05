@@ -65,15 +65,18 @@ static inline void getMatrix(const UsdPrim &prim, AtMatrix &matrix, float frame,
 void exportMatrix(const UsdPrim &prim, AtNode *node, const TimeSettings &time, UsdArnoldReaderContext &context)
 {
     UsdGeomXformable xformable(prim);
-    bool animated = xformable.TransformMightBeTimeVarying();
+    bool animated = true;//xformable.TransformMightBeTimeVarying();
     AtMatrix matrix;
     if (time.motion_blur && animated) {
         // animated matrix, need to make it an array
+
         GfInterval interval(time.start(), time.end(), false, false);
         std::vector<double> timeSamples;
         xformable.GetTimeSamplesInInterval(interval, &timeSamples);
+        
         // need to add the start end end keys (interval has open bounds)
-        size_t numKeys = timeSamples.size() + 2;
+        // Raymond, hardcoded 3 steps motinblur
+        size_t numKeys = timeSamples.size() + 3;
         AtArray *array = AiArrayAllocate(1, numKeys, AI_TYPE_MATRIX);
         float timeStep = float(interval.GetMax() - interval.GetMin()) / int(numKeys - 1);
         float timeVal = interval.GetMin();
@@ -102,12 +105,30 @@ void exportPrimvars(const UsdPrim &prim, AtNode *node, const TimeSettings &time,
     UsdGeomImageable imageable = UsdGeomImageable(prim);
     assert(imageable);
     float frame = time.frame;
+    bool hasSt = false;
+
+    for (const UsdGeomPrimvar &primvar : imageable.GetPrimvars()) {
+        TfToken name;
+        SdfValueTypeName typeName;
+        TfToken interpolation;
+        int elementSize;        
+
+        primvar.GetDeclarationInfo(&name, &typeName, &interpolation, &elementSize);
+
+        if ( std::string(name.GetString()) == std::string("st"))
+            hasSt = true;
+    }
+    
 
     for (const UsdGeomPrimvar &primvar : imageable.GetPrimvars()) {
         TfToken name;
         SdfValueTypeName typeName;
         TfToken interpolation;
         int elementSize;
+
+
+        
+
 
         primvar.GetDeclarationInfo(&name, &typeName, &interpolation, &elementSize);
         
@@ -119,6 +140,8 @@ void exportPrimvars(const UsdPrim &prim, AtNode *node, const TimeSettings &time,
         // Resolve the value
         VtValue vtValue;
         VtIntArray vtIndices;
+        size_t size(0);
+
         if (interpolation == UsdGeomTokens->constant) {
             if (!primvar.Get(&vtValue, frame)) {
                 continue;
@@ -130,13 +153,22 @@ void exportPrimvars(const UsdPrim &prim, AtNode *node, const TimeSettings &time,
                 continue;
             }
 
-            if (!primvar.GetIndices(&vtIndices, frame)) {
-                continue;
-            }
+
         } else {
             // USD comments suggest using using the ComputeFlattened() API
             // instead of Get even if they produce the same data.
             if (!primvar.ComputeFlattened(&vtValue, frame)) {
+                continue;
+            }
+        }
+        primvar.GetIndices(&vtIndices, frame);
+        size = vtIndices.size();
+
+
+        if (hasSt)
+        {
+            if ( std::string(name.GetString()) == std::string("uv"))
+            {
                 continue;
             }
         }
