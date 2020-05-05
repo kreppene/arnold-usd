@@ -31,6 +31,29 @@ void UsdArnoldReadUnsupported::read(const UsdPrim &prim, UsdArnoldReaderContext 
         "UsdArnoldReader : %s primitives not supported, cannot read %s", _type.c_str(), prim.GetName().GetText());
 }
 
+
+
+static inline void getMatrix(const UsdPrim &prim, AtMatrix &matrix, float frame, UsdArnoldReaderContext &context)
+{
+    GfMatrix4d xform;
+    bool dummyBool = false;
+    UsdGeomXformCache *xformCache = context.getXformCache(frame);
+    
+    bool createXformCache = (xformCache == NULL);
+    if (createXformCache)
+        xformCache = new UsdGeomXformCache(frame);
+    
+    xform = xformCache->GetLocalToWorldTransform(prim);
+    
+    if (createXformCache)
+        delete xformCache;
+
+    const double *array = xform.GetArray();
+    for (unsigned int i = 0; i < 4; ++i)
+        for (unsigned int j = 0; j < 4; ++j)
+            matrix[i][j] = array[4 * i + j];
+}
+
 /**
  *   Read all the arnold-specific attributes that were saved in this USD
  *primitive. Arnold attributes are prefixed with the namespace 'arnold:' We will
@@ -45,8 +68,14 @@ void UsdArnoldPrimReader::readArnoldParameters(
         return; // shouldn't happen
     }
 
+	
+	
+
+	
+	
     float frame = time.frame;
     UsdAttributeVector attributes = prim.GetAttributes();
+	
 
     // We currently support the following namespaces for arnold input attributes
     TfToken scopeToken(scope);
@@ -289,4 +318,44 @@ void UsdArnoldPrimReader::readArnoldParameters(
             }
         }
     }
+	
+	if (AiNodeEntryGetName(AiNodeGetNodeEntry(node)) == std::string("procedural"))
+	{
+		printf ("Jauda NodeName %s %s \n", AiNodeGetName(node), AiNodeEntryGetName(AiNodeGetNodeEntry(node)));
+		
+		UsdGeomXformable xformable(prim.GetParent());
+		bool animated = xformable.TransformMightBeTimeVarying();		
+		AtMatrix matrix;
+		
+		if (time.motion_blur && animated) {
+			// animated matrix, need to make it an array
+			GfInterval interval(time.start(), time.end(), false, false);
+			std::vector<double> timeSamples;
+			xformable.GetTimeSamplesInInterval(interval, &timeSamples);
+			// need to add the start end end keys (interval has open bounds)
+			size_t numKeys = timeSamples.size() + 2;
+			AtArray *array = AiArrayAllocate(1, numKeys, AI_TYPE_MATRIX);
+			float timeStep = float(interval.GetMax() - interval.GetMin()) / int(numKeys - 1);
+			float timeVal = interval.GetMin();
+			
+			for (size_t i = 0; i < numKeys; i++, timeVal += timeStep) 
+			{
+				getMatrix(prim.GetParent(), matrix, timeVal, context);
+				AiArraySetMtx(array, i, matrix);
+			}
+			AiNodeSetArray(node, "matrix", array);
+			AiNodeSetFlt(node, "motion_start", time.motion_start);
+			AiNodeSetFlt(node, "motion_end", time.motion_end);
+		} 
+		else 
+		{		
+			
+			getMatrix(prim.GetParent(), matrix, time.frame, context);
+			// set the attribute
+			
+			AiNodeSetMatrix(node, "matrix", matrix);		
+			//exportMatrix(prim, node, time, context);
+		}
+	}
+
 }
