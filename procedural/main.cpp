@@ -96,10 +96,14 @@ procedural_init
     data->setThreadCount(AiNodeGetInt(node, "threads"));
 	
     AtNode *renderCam = AiUniverseGetCamera();
+
+    printf ("%f start \n", AiNodeGetFlt(renderCam, "shutter_start"));
+    printf ("%f end \n", AiNodeGetFlt(renderCam, "shutter_end"));
+
     if (renderCam &&
         (AiNodeGetFlt(renderCam, AtString("shutter_start")) < AiNodeGetFlt(renderCam, AtString("shutter_end")))) {
-        float motion_start = AiNodeGetFlt(renderCam, AtString("shutter_start"));
-        float motion_end = AiNodeGetFlt(renderCam, AtString("shutter_end"));
+        float motion_start = -1.000f;
+        float motion_end = 1.000f;
         data->setMotionBlur((motion_start < motion_end), motion_start, motion_end);
     } else {
         data->setMotionBlur(false);
